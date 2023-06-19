@@ -1,0 +1,78 @@
+<!-- add_payment_method.html -->
+
+<form method="POST" action="{% url 'add_payment_method' %}">
+    {% csrf_token %}
+
+    <div id="card-element">
+        <!-- Stripe Elements will create the card input fields here -->
+    </div>
+
+    <button id="add-payment-method-btn" type="submit" disabled>Add Payment Method</button>
+</form>
+
+<!-- Include the necessary Stripe.js library -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<!-- Initialize Stripe Elements -->
+<script>
+    document.addEventListener('DOMContentLoaded', function (event) {
+        var stripe = Stripe('pk_test_L5lKJ9DlqtcerZV61FDQGKkQ00vMC5bFAp');
+        var elements = stripe.elements();
+
+        var cardElement = elements.create('card', {
+            hidePostalCode: true
+        });
+        cardElement.mount('#card-element');
+
+        var addPaymentMethodBtn = document.getElementById('add-payment-method-btn');
+        var form = document.querySelector('form');
+
+        cardElement.on('change', function (event) {
+            if (event.complete) {
+                addPaymentMethodBtn.disabled = false;
+            } else {
+                addPaymentMethodBtn.disabled = true;
+            }
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: {
+                    email: '{{user.email}}'  // Replace with the actual email
+                }
+            }).then(function (result) {
+                console.log({result})
+                if (result.error) {
+                    // Handle error
+                    console.log(result.error.message);
+                } else {
+                    var payid = document.createElement('input');
+                    payid.setAttribute('type', 'hidden');
+                    payid.setAttribute('name', 'payment_method_id');
+                    payid.setAttribute('value', result.paymentMethod.id);
+                    form.appendChild(payid);
+                    var last = document.createElement('input');
+                    last.setAttribute('type', 'hidden');
+                    last.setAttribute('name', 'card_last');
+                    last.setAttribute('value', result.paymentMethod.card.last4);
+                    form.appendChild(last);
+                    var month = document.createElement('input');
+                    month.setAttribute('type', 'hidden');
+                    month.setAttribute('name', 'card_exp_month');
+                    month.setAttribute('value', result.paymentMethod.card.exp_month);
+                    form.appendChild(month);
+                    var year = document.createElement('input');
+                    year.setAttribute('type', 'hidden');
+                    year.setAttribute('name', 'card_exp_year');
+                    year.setAttribute('value', result.paymentMethod.card.exp_month);
+                    form.appendChild(year);
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>

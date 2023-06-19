@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- purchase.html -->
+    
+    <form method="POST" action="{% url 'purchase_product' %}">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" value="your_product_id">
+    
+        <h3>Select Payment Method:</h3>
+        <select name="payment_method_id">
+            {% for payment_method in payment_methods %}
+            <option value="{{ payment_method.stripe_payment_method_id }}">
+                **** **** **** {{ payment_method.last4 }} ({{ payment_method.exp_month }}/{{ payment_method.exp_year }})
+            </option>
+            {% endfor %}
+            <option value="new_card">Add a New Card</option>
+        </select>
+    
+        <button type="submit">Purchase</button>
+    </form>
+
+</body>
+</html>
